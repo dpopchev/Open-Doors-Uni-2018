@@ -51,8 +51,8 @@ class motion:
         x, y, vx, vy = ode
 
         return [
-            vx*t,
-            vy*t,
+            vx,
+            vy,
             0,
             -g
         ]

@@ -2,6 +2,7 @@
 
 import aristotel
 import galilee
+import newton
 import imp
 import matplotlib.animation as animation
 
@@ -12,13 +13,15 @@ from IPython import get_ipython
 
 imp.reload(aristotel)
 imp.reload(galilee)
+imp.reload(newton)
+
 #~ get_ipython().run_line_magic("matplotlib", "qt5")
 
 class motion:
 
     _parameters_default = {
         "m": [ 1, 5, 10 ],
-        "b": 1,
+        "b": 5,
         "g": 9.81,
         "x0": 0,
         "y0": 10,
@@ -32,6 +35,7 @@ class motion:
 
         self.A = aristotel.motion()
         self.G = galilee.motion()
+        self.N_motion = newton.motion()
 
         self.m = []
         self.b = None
@@ -51,6 +55,7 @@ class motion:
 
         self.data_aristotel = {}
         self.data_galilee = {}
+        self.data_newton_motion = {}
 
         self.change_params(**kwargs)
 
@@ -606,6 +611,80 @@ class motion:
 
         plt.show()
 
+    def _load_newton_motion_all(self):
+
+        self.data_newton_motion.clear()
+
+        for _ in self.m:
+
+            self.data_newton_motion["m={}".format(_)] = self.N_motion.get_data(g=self.g, m=_, b=self.b)
+
+            self.data_newton_motion["m={}".format(_)][0] = \
+                self._reduce_points( self.data_newton_motion["m={}".format(_)][0] )
+
+            for ind, ydata in enumerate(self.data_newton_motion["m={}".format(_)][1]):
+                self.data_newton_motion["m={}".format(_)][1][ind] = self._reduce_points( ydata )
+
+
+        self.data_newton_motion["c"] = "b"
+
+    def plot_y_vy_all_newton_motion(self):
+
+        fig, ax_y, ax_vy = self._get_y_vy_plot()
+
+        self._load_newton_motion_all()
+
+        self._set_plot_parms(ax_y, "time", "height")
+        self._set_plot_parms(ax_vy, "time", "speed")
+
+        for _, ls_ms in zip(self.data_newton_motion.keys() - "c", self.ls_ms):
+
+            self._set_max_min_y_vy_t(self.data_newton_motion[_])
+
+            ax_y.plot(
+                self.data_newton_motion[_][0],
+                self.data_newton_motion[_][1][1],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_newton_motion["c"],
+                label="{}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+            ax_vy.plot(
+                self.data_newton_motion[_][0],
+                [abs(i) for i in self.data_newton_motion[_][1][3]],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_newton_motion["c"],
+                label="{}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+        ax_y.set_xlim(
+            self.min_t - 0.05*self.min_t,
+            self.max_t + 0.05*self.max_t
+        )
+        ax_y.set_ylim(
+            self.min_y - 0.05*self.min_y,
+            self.max_y + 0.05*self.max_y
+        )
+        ax_y.legend(loc="best",fontsize=10)
+
+        ax_vy.set_xlim(
+            self.min_t - 0.05*self.min_t,
+            self.max_t + 0.05*self.max_t
+        )
+
+        ax_vy.set_ylim(
+            self.min_vy - 0.05*self.min_vy,
+            self.max_vy + 0.05*self.max_vy
+        )
+        ax_vy.legend(loc="best",fontsize=10)
+
+        plt.show()
 
     #@staticmethod
     #def _get_N_random_colors(N=4):
