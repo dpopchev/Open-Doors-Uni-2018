@@ -912,8 +912,143 @@ class orbit:
         "k": 1
     }
 
+    def __init__(self, **kwargs):
 
+        self.N = newton.orbit()
 
+        self.M = None
+        self.G = None
+        self.L = None
+        self.c = None
+        self.r0 = None
+        self.drdphi0 = None
+        self.phi0 = None
+        self.dt = None
+        self.k = None
+
+        self.change_params(**kwargs)
+
+        self.data_newton_orbit = []
+
+        return
+
+    def change_params(self, **kwargs):
+
+        for _ in kwargs.keys():
+            if _.lower() not in list(self._parameters_default.keys()):
+                print("\n\n {} NOT KNOWN, skipping \n\n".format(_))
+            else:
+                self.__dict__[_] = kwargs[_]
+
+        for _ in self._parameters_default.keys():
+            if not self.__dict__[_]:
+                self.__dict__[_] = self._parameters_default[_]
+
+        return
+
+    @staticmethod
+    def _get_polar_plot():
+
+        style.use("seaborn-poster")
+
+        gs = GridSpec(nrows=1, ncols=1)
+
+        fig = plt.figure()
+        fig.set_tight_layout(True)
+
+        ax = fig.add_subplot(gs[0,0], polar=True)
+
+        return fig, ax
+
+    def _load_all_newton_orbit(self):
+
+        self.data_newton_orbit.clear()
+
+        l_phi0 = [ -_*1e-2 for _ in range(0,630,50) ]
+
+        for _ in l_phi0:
+
+            self.data_newton_orbit.append(self.N.get_k_period_data(k=2, phi0=_))
+
+    def _load_all_gr_orbit(self):
+
+        self.data_newton_orbit.clear()
+
+        l_phi0 = [ -_*1e-2 for _ in range(0,630,50) ]
+
+        for _ in l_phi0:
+
+            self.data_newton_orbit.append(self.N.get_k_period_data(k=2, phi0=_))
+
+    def plot_all_newton_orbit(self):
+
+        fig, ax = self._get_polar_plot()
+
+        self._load_all_newton_orbit()
+
+        for _ in self.data_newton_orbit:
+            ax.plot(_[0], _[1][0])
+
+        plt.show()
+
+    def update_newton_orbit_plot(self, frame, ax):
+
+        ax.clear()
+
+        ax.plot(
+            frame[0][0],
+            frame[0][1][0],
+            linestyle="-",
+            linewidth=2,
+            color="b",
+        )
+
+        for _ in frame[1:]:
+
+            ax.plot(
+                _[0],
+                _[1][0],
+                linestyle="--",
+                linewidth=2,
+                color="r",
+                alpha=0.4
+            )
+
+    def update_newton_orbit_data(self):
+
+        i = 1
+
+        while i <= len(self.data_newton_orbit):
+
+            yield self.data_newton_orbit[:i]
+
+            i += 1
+
+    def animate_all_newton_orbit(self):
+
+        fig, ax = self._get_polar_plot()
+        fig2, ax2 = self._get_polar_plot()
+
+        self._load_all_newton_orbit()
+
+        ax2.plot(
+            self.data_newton_orbit[0][0],
+            self.data_newton_orbit[0][1][0],
+            linestyle="-",
+            linewidth=2,
+            color="b",
+        )
+
+        ani = animation.FuncAnimation(
+            fig=fig,
+            func=self.update_newton_orbit_plot,
+            fargs=(ax,),
+            frames=self.update_newton_orbit_data,
+            interval=500,
+            repeat=True
+        )
+
+        plt.show(block=True)
 
 if __name__ == "__main__":
 

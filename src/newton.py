@@ -110,7 +110,7 @@ class orbit:
     _parameters_default = {
         "M": 1,
         "G": 1,
-        "L": 1.21,
+        "L": 1.1,
         "c": 3,
         "r0": 1,
         "drdphi0": 0,
@@ -209,34 +209,34 @@ class orbit:
 
         return
 
-    def get_data(self, **kwargs):
-
-        self.change_params(**kwargs)
+    def get_k_period_data(self, **kwargs):
 
         from scipy.integrate import ode
 
+        self.change_params(**kwargs)
+
         r = ode(self._eq_motion).set_integrator("dopri5")
 
-        r.set_f_params(self.g, self.m, self.b)
+        r.set_f_params(self.L, self.M, self.G)
 
         r.set_initial_value(
-            y=[ self.x0, self.y0, self.vx0, self.vy0 ],
-            t=self.t0
+            y=[ self.r0, self.drdphi0 ],
+            t=self.phi0
         )
 
-        t = [ r.t ]
+        phi= [ r.t ]
         ode = [ [ _ ] for _ in r.y ]
 
-        while r.integrate(r.t+self.dt)[1] >= 0:
+        while r.t <= self.k*2*3.14:
 
-            t.append(r.t)
+            r.integrate(r.t+self.dt)
+
+            phi.append(r.t)
 
             for i,j in zip(ode, r.y):
                 i.append(j)
 
-        return [ t, ode ]
-
-
+        return [ phi, ode ]
 
 if __name__ == "__main__":
 
