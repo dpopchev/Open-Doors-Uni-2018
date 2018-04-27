@@ -243,12 +243,7 @@ class motion:
 
     def plot_y_vy_all_aristotel_v_G(self, ax_y, ax_vy):
 
-        self._set_plot_parms(ax_y, "time", "height")
-        self._set_plot_parms(ax_vy, "time", "speed")
-
         for _, ls_ms in zip(self.data_aristotel.keys() - "c", self.ls_ms):
-
-            #~ self._set_max_min_y_vy_t(self.data_aristotel[_])
 
             ax_y.plot(
                 self.data_aristotel[_][0],
@@ -256,7 +251,7 @@ class motion:
                 linestyle=ls_ms[0],
                 linewidth=1.2,
                 color=self.data_aristotel["c"],
-                label="{}".format(_),
+                label="A, {}".format(_),
                 marker=ls_ms[1],
                 markersize=8
             )
@@ -267,20 +262,10 @@ class motion:
                 linestyle=ls_ms[0],
                 linewidth=1.2,
                 color=self.data_aristotel["c"],
-                label="{}".format(_),
+                label="A, {}".format(_),
                 marker=ls_ms[1],
                 markersize=8
             )
-
-        #~ ax_y.set_xlim(0, self.max_t + 0.05*self.max_t)
-        #~ ax_y.set_ylim(0, self.max_y + 0.05*self.max_y)
-        #~ ax_y.legend(loc="best",fontsize=10)
-
-        #~ ax_vy.set_xlim(0, self.max_t + 0.05*self.max_t)
-        #~ ax_vy.set_ylim(0, self.max_vy + 0.05*self.max_vy)
-        #~ ax_vy.legend(loc="best",fontsize=10)
-
-        #~ plt.show()
 
     def update_A_data(self):
 
@@ -431,6 +416,32 @@ class motion:
         ax_vy.legend(loc="best",fontsize=10)
 
         plt.show()
+
+    def plot_y_vy_all_galilee_v_N_motion(self, ax_y, ax_vy):
+
+        for _, ls_ms in zip(self.data_galilee.keys() - "c", self.ls_ms):
+
+            ax_y.plot(
+                self.data_galilee[_][0],
+                self.data_galilee[_][1][1],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_galilee["c"],
+                label="G, {}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+            ax_vy.plot(
+                self.data_galilee[_][0],
+                [abs(i) for i in self.data_galilee[_][1][3]],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_galilee["c"],
+                label="G, {}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
 
     def update_G_data(self):
 
@@ -768,6 +779,118 @@ class motion:
             func=self.update_N_motion_plot,
             fargs=(ax_y, ax_vy),
             frames=self.update_N_motion_data,
+            interval=500,
+            repeat=False
+        )
+
+        plt.show()
+
+    def update_N_motion_data(self):
+
+        lengths = []
+        for _ in self.data_newton_motion.keys() - "c":
+            lengths.append(len(self.data_newton_motion[_][0]) + 1)
+
+        i = 1
+        while i <= max(lengths):
+
+            yield {
+                mass: [
+                    self.data_newton_motion[mass][0][:i], [
+                        ypoints[:i] for ypoints in self.data_newton_motion[mass][1]
+                    ]
+                ] for mass in self.data_newton_motion.keys() - "c"
+            }
+
+            i += 1
+
+    def update_N_motion_vs_G_A_data(self):
+
+        lengths = []
+        for _ in self.data_newton_motion.keys() - "c":
+            lengths.append(len(self.data_newton_motion[_][0]) + 1)
+
+        i = 1
+        while i <= max(lengths):
+
+            yield {
+                mass: [
+                    self.data_newton_motion[mass][0][:i], [
+                        ypoints[:i] for ypoints in self.data_newton_motion[mass][1]
+                    ]
+                ] for mass in self.data_newton_motion.keys() - "c"
+            }
+
+            i += 1
+
+    def update_N_motion_vs_G_A_plot(self, frame, ax_y, ax_vy):
+
+        self._set_plot_parms(ax_y, "time", "height")
+        self._set_plot_parms(ax_vy, "time", "speed")
+
+        self.plot_y_vy_all_aristotel_v_G(ax_y, ax_vy)
+        self.plot_y_vy_all_galilee_v_N_motion(ax_y, ax_vy)
+
+        for _, ls_ms in zip(frame, self.ls_ms):
+
+            self._set_max_min_y_vy_t(self.data_newton_motion[_])
+
+            ax_y.plot(
+                frame[_][0],
+                frame[_][1][1],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_newton_motion["c"],
+                label="{}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+            ax_vy.plot(
+                frame[_][0],
+                [abs(i) for i in frame[_][1][3]],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_newton_motion["c"],
+                label="{}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+        ax_y.set_xlim(
+            self.min_t - 0.05*self.min_t,
+            self.max_t + 0.05*self.max_t
+        )
+        ax_y.set_ylim(
+            self.min_y - 0.05*self.min_y,
+            self.max_y + 0.05*self.max_y
+        )
+        ax_y.legend(loc="best",fontsize=10)
+
+        ax_vy.set_xlim(
+            self.min_t - 0.05*self.min_t,
+            self.max_t + 0.05*self.max_t
+        )
+
+        ax_vy.set_ylim(
+            self.min_vy - 0.05*self.min_vy,
+            self.max_vy + 0.05*self.max_vy
+        )
+        ax_vy.legend(loc="best",fontsize=10)
+
+    def animate_all_newton_motion_vs_G_A(self):
+
+        fig, ax_y, ax_vy = self._get_y_vy_plot()
+
+        self._load_aristotel_all()
+        self._load_galilee_all()
+        self._load_newton_motion_all()
+
+        ani = animation.FuncAnimation(
+            fig=fig,
+            func=self.update_N_motion_vs_G_A_plot,
+            fargs=(ax_y, ax_vy),
+            frames=self.update_N_motion_vs_G_A_data,
             interval=500,
             repeat=False
         )
