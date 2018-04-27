@@ -105,6 +105,35 @@ class orbit:
 
         return
 
+    def get_k_period_data(self, **kwargs):
+
+        from scipy.integrate import ode
+
+        self.change_params(**kwargs)
+
+        r = ode(self._eq_motion).set_integrator("dopri5")
+
+        r.set_f_params(self.L, self.M, self.G, self.c)
+
+        r.set_initial_value(
+            y=[ self.r0, self.drdphi0 ],
+            t=self.phi0
+        )
+
+        phi= [ r.t ]
+        ode = [ [ _ ] for _ in r.y ]
+
+        while r.t <= self.k*2*3.14:
+
+            r.integrate(r.t+self.dt)
+
+            phi.append(r.t)
+
+            for i,j in zip(ode, r.y):
+                i.append(j)
+
+        return [ phi, ode ]
+
 if __name__ == "__main__":
 
     print("\n Hello world \n")

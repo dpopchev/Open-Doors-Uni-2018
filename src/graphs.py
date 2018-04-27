@@ -3,6 +3,7 @@
 import aristotel
 import galilee
 import newton
+import gr
 import imp
 import matplotlib.animation as animation
 
@@ -14,6 +15,7 @@ from IPython import get_ipython
 imp.reload(aristotel)
 imp.reload(galilee)
 imp.reload(newton)
+imp.reload(gr)
 
 #~ if you start it from jupyter qtconsole, this will create separated windows
 #~ get_ipython().run_line_magic("matplotlib", "qt5")
@@ -915,6 +917,7 @@ class orbit:
     def __init__(self, **kwargs):
 
         self.N = newton.orbit()
+        self.GR = gr.orbit()
 
         self.M = None
         self.G = None
@@ -929,6 +932,7 @@ class orbit:
         self.change_params(**kwargs)
 
         self.data_newton_orbit = []
+        self.data_gr_orbit = []
 
         return
 
@@ -965,20 +969,21 @@ class orbit:
         self.data_newton_orbit.clear()
 
         l_phi0 = [ -_*1e-2 for _ in range(0,630,50) ]
+        l_phi0 = [ 0 ]
 
         for _ in l_phi0:
 
-            self.data_newton_orbit.append(self.N.get_k_period_data(k=2, phi0=_))
+            self.data_newton_orbit.append(self.N.get_k_period_data(k=2, phi0=_, L=1.01))
 
     def _load_all_gr_orbit(self):
 
-        self.data_newton_orbit.clear()
+        self.data_gr_orbit.clear()
 
-        l_phi0 = [ -_*1e-2 for _ in range(0,630,50) ]
+        l_phi0 = [ 1 ]
 
         for _ in l_phi0:
 
-            self.data_newton_orbit.append(self.N.get_k_period_data(k=2, phi0=_))
+            self.data_gr_orbit.append(self.GR.get_k_period_data(k=_))
 
     def plot_all_newton_orbit(self):
 
@@ -1049,6 +1054,42 @@ class orbit:
         )
 
         plt.show(block=True)
+
+    def plot_all_gr_orbit(self):
+
+        fig, ax = self._get_polar_plot()
+
+        self._load_all_gr_orbit()
+
+        for _ in self.data_gr_orbit:
+            ax.plot(_[0], _[1][0])
+
+        plt.show()
+
+    def compare_first_gr_newton_orbit(self):
+
+        fig, ax = self._get_polar_plot()
+
+        self._load_all_newton_orbit()
+        self._load_all_gr_orbit()
+
+        ax.plot(
+            self.data_newton_orbit[0][0],
+            self.data_newton_orbit[0][1][0],
+            linestyle="",
+            marker="o",
+            markersize=8,
+            alpha=0.4
+        )
+
+        ax.plot(
+            self.data_gr_orbit[0][0],
+            self.data_gr_orbit[0][1][0],
+            linestyle="-",
+            color="k"
+        )
+
+        plt.show()
 
 if __name__ == "__main__":
 

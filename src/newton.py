@@ -138,7 +138,7 @@ class orbit:
     def change_params(self, **kwargs):
 
         for _ in kwargs.keys():
-            if _.lower() not in list(self._parameters_default.keys()):
+            if _ not in list(self._parameters_default.keys()):
                 print("\n\n {} NOT KNOWN, skipping \n\n".format(_))
             else:
                 self.__dict__[_] = kwargs[_]
