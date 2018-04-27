@@ -969,19 +969,18 @@ class orbit:
         self.data_newton_orbit.clear()
 
         l_phi0 = [ -_*1e-2 for _ in range(0,630,50) ]
-        l_phi0 = [ 0 ]
 
         for _ in l_phi0:
 
-            self.data_newton_orbit.append(self.N.get_k_period_data(k=2, phi0=_, L=1.01))
+            self.data_newton_orbit.append(self.N.get_k_period_data(k=2, phi0=_))
 
     def _load_all_gr_orbit(self):
 
         self.data_gr_orbit.clear()
 
-        l_phi0 = [ 1 ]
+        l_k = [ 1, 2, 3, 4, 5 ]
 
-        for _ in l_phi0:
+        for _ in l_k:
 
             self.data_gr_orbit.append(self.GR.get_k_period_data(k=_))
 
@@ -1070,16 +1069,17 @@ class orbit:
 
         fig, ax = self._get_polar_plot()
 
-        self._load_all_newton_orbit()
+        dummy = self.N.get_k_period_data(k=2, phi0=0, L=1.01)
         self._load_all_gr_orbit()
 
         ax.plot(
-            self.data_newton_orbit[0][0],
-            self.data_newton_orbit[0][1][0],
+            dummy[0],
+            dummy[1][0],
             linestyle="",
             marker="o",
             markersize=8,
-            alpha=0.4
+            alpha=0.4,
+            markevery=int(len(dummy[0])/180)
         )
 
         ax.plot(
