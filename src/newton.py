@@ -5,10 +5,10 @@ class motion:
 
     _parameters_default = {
         "m": 10,
-        "b": 200,
+        "b": 1,
         "g": 9.81,
         "x0": 0,
-        "y0": 100,
+        "y0": 20,
         "vx0": 0,
         "vy0": 0,
         "t0": 0,
@@ -36,6 +36,8 @@ class motion:
         for _ in kwargs.keys():
             if _.lower() not in list(self._parameters_default.keys()):
                 print("\n\n {} NOT KNOWN, skipping \n\n".format(_))
+            else:
+                self.__dict__[_] = kwargs[_]
 
         for _ in self._parameters_default.keys():
             if not self.__dict__[_]:
@@ -82,8 +84,6 @@ class motion:
         from scipy.integrate import ode
 
         r = ode(self._eq_motion).set_integrator("dopri5")
-
-        print(self.g, self.m, self.b)
 
         r.set_f_params(self.g, self.m, self.b)
 

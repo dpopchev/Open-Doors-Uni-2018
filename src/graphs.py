@@ -21,7 +21,7 @@ class motion:
 
     _parameters_default = {
         "m": [ 1, 5, 10 ],
-        "b": 5,
+        "b": 1,
         "g": 9.81,
         "x0": 0,
         "y0": 10,
@@ -617,7 +617,7 @@ class motion:
 
         for _ in self.m:
 
-            self.data_newton_motion["m={}".format(_)] = self.N_motion.get_data(g=self.g, m=_, b=self.b)
+            self.data_newton_motion["m={}".format(_)] = self.N_motion.get_data(m=_)
 
             self.data_newton_motion["m={}".format(_)][0] = \
                 self._reduce_points( self.data_newton_motion["m={}".format(_)][0] )
