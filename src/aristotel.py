@@ -6,177 +6,101 @@ class motion:
     _parameters_default = {
         "m": 10,
         "b": 1,
-        "h": 10,
-        "l": 10,
-        "dt": 1e-3,
-        "t": 10
+        "x0": 0,
+        "y0": 10,
+        "vx0": 0,
+        "vy0": 0,
+        "t0": 0,
+        "dt": 1e-3
     }
 
     def __init__(self, **kwargs):
-        """
-        aristotel.equations contains
-
-            change_params method:
-                is to change any of the parameters, see it for more info
-
-            free_fall_time:
-                find the time for a body with given mass <m> to fall through
-                height <h> and medium with resistance characterized by <b>
-                using aristotel mechanics
-
-            free_fall_HvsT:
-                find the time for a body with given mass <m> to fall through
-                height <h> and medium with resistance characterized by <b>
-                using aristotel mechanics and return data to plot it
-        """
 
         self.m = None
         self.b = None
-        self.h = None
-        self.l = None
+        self.x0 = None
+        self.y0 = None
+        self.vx0 = None
+        self.vy0 = None
+        self.t0 = None
         self.dt = None
-        self.t = None
 
         self.change_params(**kwargs)
 
         return
 
     def change_params(self, **kwargs):
-        """
-        change the any value of any attribute of the class
 
-        Parameters
-        ----------
-        m: double
-            mass of the body in motion
-
-        b: double
-            drag coefficient of the medium in which it is moving
-
-        h: double
-            horizontal distance
-
-        l: double
-            vertical distance
-
-        dt: double
-            time stepsize
-
-        t: double
-            time interval
-
-        Returns
-        -------
-        """
-
-        for key in kwargs.keys():
-            if key.lower() not in list(self.__dict__.keys()):
-                print("\n\n {} NOT KNOWN, skipping \n\n".format(key))
+        for _ in kwargs.keys():
+            if _.lower() not in list(self._parameters_default.keys()):
+                print("\n\n {} NOT KNOWN, skipping \n\n".format(_))
             else:
-                self.__dict__[key] = kwargs[key]
+                self.__dict__[_] = kwargs[_]
 
-        for _key in self.__dict__.keys():
-            if not self.__dict__[_key]:
-                self.__dict__[_key] = self._parameters_default[_key]
+        for _ in self._parameters_default.keys():
+            if not self.__dict__[_]:
+                self.__dict__[_] = self._parameters_default[_]
 
         return
 
     @staticmethod
-    def _eq_free_fall(t, y, m, b):
+    def _eq_motion(t, ode, m, b):
 
-        return -m/b
+        x, y, vx, vy = ode
 
-    def free_fall_time(self, **kwargs):
-        """
-        find the time for a body with given mass <m> to fall through height <h>
-        and medium with resistance characterized by <b> using aristotel
-        mechanics, the smaller the <dt> the better the result
+        return [
+            ( (-1) if vx > 0 else (+1) )*x,
+            (-1)*(m/b),
+            0,
+            0
+        ]
 
-        Parameters
-        ----------
-        m: double
-            mass the falling body
-
-        h: double
-            height to be fallen
-
-        b: double
-            drag coefficient of the medium
-
-        dt: double
-            step size of the time interval
-
-        Returns
-        -------
-        :double
-            the time for which the body falls distance <h>
-        """
+    def time_it(self, **kwargs):
 
         self.change_params(**kwargs)
 
         from scipy.integrate import ode
 
-        r = ode(self._eq_free_fall).set_integrator("dopri5")
+        r = ode(self._eq_motion).set_integrator("dopri5")
 
         r.set_f_params(self.m, self.b)
 
-        r.set_initial_value(y=self.h, t=0)
+        r.set_initial_value(
+            y=[ self.x0, self.y0, self.vx0, self.vy0 ],
+            t=self.t0
+        )
 
-        while r.integrate(r.t+self.dt)[0] >= 0:
+        while r.integrate(r.t+self.dt)[1] >= 0:
             continue
 
         return r.t - self.dt
 
-    def free_fall_HvsT(self, **kwargs):
-        """
-        find the time for a body with given mass <m> to fall through height <h>
-        and medium with resistance characterized by <b> using aristotel
-        mechanics, the smaller the <dt> the better the result it will return
-        list of time and corresponding height
-
-        Parameters
-        ----------
-        m: double
-            mass the falling body
-
-        h: double
-            height to be fallen
-
-        b: double
-            drag coefficient of the medium
-
-        dt: double
-            step size of the time interval
-
-
-        Returns
-        -------
-        : tuple
-            [0] is the time
-            [1]: nested list
-                [0]: list
-                    the height position for the corresponding time
-        """
+    def get_data(self, **kwargs):
 
         self.change_params(**kwargs)
 
         from scipy.integrate import ode
 
-        r = ode(self._eq_free_fall).set_integrator("dopri5")
+        r = ode(self._eq_motion).set_integrator("dopri5")
 
         r.set_f_params(self.m, self.b)
 
-        r.set_initial_value(y=self.h, t=0)
+        r.set_initial_value(
+            y=[ self.x0, self.y0, self.vx0, self.vy0+self.m/self.b ],
+            t=self.t0
+        )
 
-        t_list = [ 0 ]
-        y_nested_list = [ [ self.h ] ]
+        t = [ r.t ]
+        ode = [ [ _ ] for _ in r.y ]
 
-        while r.integrate(r.t+self.dt)[0] >= 0:
+        while r.integrate(r.t+self.dt)[1] >= 0:
 
-            t_list.append(r.t)
-            y_nested_list[0].append(r.y[0])
+            t.append(r.t)
 
-        return t_list, y_nested_list
+            for i,j in zip(ode, r.y):
+                i.append(j)
+
+        return [ t, ode ]
 
 if __name__ == "__main__":
 
