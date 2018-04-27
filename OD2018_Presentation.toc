@@ -1,5 +1,0 @@
-\beamer@endinputifotherversion {3.36pt}
-\select@language {bulgarian}
-\beamer@sectionintoc {1}{ \IeC {\CYRI }\IeC {\cyrs }\IeC {\cyrt }\IeC {\cyro }\IeC {\cyrr }\IeC {\cyri }\IeC {\cyrya } }{2}{0}{1}
-\beamer@sectionintoc {2}{ \IeC {\CYRN }\IeC {\cyra }\IeC {\cyrs }\IeC {\cyrt }\IeC {\cyro }\IeC {\cyrya }\IeC {\cyrshch }\IeC {\cyre } }{21}{0}{2}
-\beamer@sectionintoc {3}{ \IeC {\CYRB }\IeC {\cyrhrdsn }\IeC {\cyrd }\IeC {\cyre }\IeC {\cyrshch }\IeC {\cyre } }{28}{0}{3}
