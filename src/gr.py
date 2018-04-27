@@ -3,65 +3,107 @@
 
 class orbit:
 
-    def __init__(self):
-        pass
+    _parameters_default = {
+        "M": 1,
+        "G": 1,
+        "L": 1.21,
+        "c": 3,
+        "r0": 1,
+        "drdphi0": 0,
+        "phi0": 0,
+        "dt": 1e-3,
+        "k": 1
+    }
+
+    def __init__(self, **kwargs):
+
+        self.M = None
+        self.G = None
+        self.L = None
+        self.c = None
+        self.r0 = None
+        self.drdphi0 = None
+        self.phi0 = None
+        self.dt = None
+        self.k = None
+
+        self.change_params(**kwargs)
+
+        return
+
+    def change_params(self, **kwargs):
+
+        for _ in kwargs.keys():
+            if _.lower() not in list(self._parameters_default.keys()):
+                print("\n\n {} NOT KNOWN, skipping \n\n".format(_))
+            else:
+                self.__dict__[_] = kwargs[_]
+
+        for _ in self._parameters_default.keys():
+            if not self.__dict__[_]:
+                self.__dict__[_] = self._parameters_default[_]
+
+        return
 
     @staticmethod
-    def _eq_orbit(t, y, l, M, G, c):
+    def _eq_motion(t, ode, L, M, G, c):
 
-        r, v = y
+        r, v = ode
 
-        return [ v, (2*v**2)/r + r - (G*M*r**2)/l**2 - (3*G*M)/c**2]
+        return [
+            v,
+            2*v**2/r + r - G*M*r**2/L**2 - 3*G*M/c**2
+        ]
 
-    def solve_orbit(self):
+    def plot_k_period(self, **kwargs):
 
         from scipy.integrate import ode
-        from math import sqrt
+        from matplotlib import pyplot as plt
+        from matplotlib import style
+        from matplotlib.gridspec import GridSpec
 
-        r = ode(self._eq_orbit).set_integrator("dopri5")
+        self.change_params(**kwargs)
 
-        dt = 1e-3
-        r_init = 1
-        drdphi_init = 0.1
+        r = ode(self._eq_motion).set_integrator("dopri5")
 
-        M = 1
-        G = 1
-        c = 3
-        l = 1.21
+        r.set_f_params(self.L, self.M, self.G, self.c)
 
-        r.set_f_params(l, M, G, c)
-        r.set_initial_value(y=[r_init, drdphi_init], t=0)
+        r.set_initial_value(
+            y=[ self.r0, self.drdphi0 ],
+            t=self.phi0
+        )
 
-        t_list = [ 0 ]
-        y_nested_list = [ [ r_init ], [ drdphi_init ] ]
+        phi= [ r.t ]
+        ode = [ [ _ ] for _ in r.y ]
 
-        k = 4
+        while r.t <= self.k*2*3.14:
 
-        while r.t < k*3.14:
+            r.integrate(r.t+self.dt)
 
-            r.integrate(r.t+dt)
+            phi.append(r.t)
 
-            print(r.t, r.y[0], r.y[1] )
+            for i,j in zip(ode, r.y):
+                i.append(j)
 
-            t_list.append(r.t)
-            y_nested_list[0].append(r.y[0])
-            y_nested_list[1].append(r.y[1])
+        style.use("seaborn-poster")
 
-        import matplotlib.pyplot as plt
-        ax = plt.subplot(111, projection='polar')
-        ax.plot(t_list, y_nested_list[0])
+        gs = GridSpec(nrows=1, ncols=2)
 
-        fig2, ax2 = plt.subplots()
+        fig = plt.figure()
+        fig.set_tight_layout(True)
 
-        ax2.plot(t_list, y_nested_list[0])
+        ax_r = fig.add_subplot(gs[0,0], polar=True)
+        ax_drdphi = fig.add_subplot(gs[0,1], polar=True)
 
-        #~ fig3, ax3 = plt.subplots()
+        ax_r.plot(phi, ode[0], label="r(phi)")
+        ax_drdphi.plot(phi, ode[1], label="drdphi")
 
-        #~ ax3.plot(t_list, y_nested_list[1])
+        ax_r.legend(loc="best", fontsize=10)
+        ax_drdphi.legend(loc="best", fontsize=10)
 
         plt.show()
 
-        return t_list, y_nested_list
+        return
 
 if __name__ == "__main__":
 

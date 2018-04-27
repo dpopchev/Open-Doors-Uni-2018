@@ -117,7 +117,7 @@ class motion:
         from itertools import product
         from random import shuffle
 
-        list_ls = [ "-", "--" ]
+        list_ls = [ "-", "--", ".-" ]
         list_ms = [ "o", "d", "x", "" ]
 
         all_combinations = [ _ for _ in product(list_ls, list_ms) ]
