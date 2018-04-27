@@ -6,6 +6,7 @@ class motion:
     _parameters_default = {
         "m": 10,
         "b": 1,
+        "g": 9.81,
         "x0": 0,
         "y0": 10,
         "vx0": 0,
@@ -18,6 +19,7 @@ class motion:
 
         self.m = None
         self.b = None
+        self.g = None
         self.x0 = None
         self.y0 = None
         self.vx0 = None

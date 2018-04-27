@@ -6,322 +6,103 @@ class motion:
     _parameters_default = {
         "m": 10,
         "b": 1,
-        "h": 10,
-        "l": 10,
-        "dt": 1e-3,
-        "t": 10,
         "g": 9.81,
-        "v0": 0
+        "x0": 0,
+        "y0": 10,
+        "vx0": 0,
+        "vy0": 0,
+        "t0": 0,
+        "dt": 1e-3
     }
 
     def __init__(self, **kwargs):
-        """
-        galilee.equations contains following methods
-
-            change_params:
-                is to change any of the parameters, see it for more info
-
-            free_fall_NoAir_time:
-                find the time for a body with given mass <m> to fall through
-                height <h> and on planet with gravitational acceleration <g>
-                without considering air resistance using galilee mechanics
-
-            free_fall_NoAir_HvsT:
-                find the time for a body with given mass <m> to fall through
-                height <h> and on planet with gravitational acceleration <g>
-                without considering air resistance using galilee mechanics
-
-            free_fall_Air_time:
-                find the time for a body with given mass <m> to fall through
-                height <h> and on planet with gravitational acceleration <g>
-                and considering air resistance using galilee mechanics
-
-            free_fall_Air_HvsT:
-                find the time for a body with given mass <m> to fall through
-                height <h> and on planet with gravitational acceleration <g>
-                and considering air resistance using galilee mechanics
-        """
 
         self.m = None
         self.b = None
-        self.h = None
-        self.l = None
-        self.dt = None
-        self.t = None
         self.g = None
-        self.v0 = None
+        self.x0 = None
+        self.y0 = None
+        self.vx0 = None
+        self.vy0 = None
+        self.t0 = None
+        self.dt = None
 
         self.change_params(**kwargs)
 
         return
 
     def change_params(self, **kwargs):
-        """
-        change the any value of any attribute of the class
 
-        Parameters
-        ----------
-        m: double
-            mass of the body in motion
-
-        b: double
-            drag coefficient of the medium in which it is moving
-
-        h: double
-            horizontal distance
-
-        l: double
-            vertical distance
-
-        dt: double
-            time stepsize
-
-        t: double
-            time interval
-
-        g: double
-            gravitational acceleration
-
-        v0: double
-            initial velocity
-
-        Returns
-        -------
-        """
-
-        for key in kwargs.keys():
-            if key.lower() not in list(self.__dict__.keys()):
-                print("\n\n {} NOT KNOWN, skipping \n\n".format(key))
+        for _ in kwargs.keys():
+            if _.lower() not in list(self._parameters_default.keys()):
+                print("\n\n {} NOT KNOWN, skipping \n\n".format(_))
             else:
-                self.__dict__[key] = kwargs[key]
+                self.__dict__[_] = kwargs[_]
 
-        for _key in self.__dict__.keys():
-            if not self.__dict__[_key]:
-                self.__dict__[_key] = self._parameters_default[_key]
+        for _ in self._parameters_default.keys():
+            if not self.__dict__[_]:
+                self.__dict__[_] = self._parameters_default[_]
 
         return
 
     @staticmethod
-    def _eq_free_fall_NoAir(t, y, g):
+    def _eq_motion(t, ode, g):
 
-        h, v = y
+        x, y, vx, vy = ode
 
-        return [ v, -g ]
+        return [
+            vx*t,
+            vy*t,
+            0,
+            -g
+        ]
 
-    @staticmethod
-    def _eq_free_fall_Air(t, y, g, b):
-
-        h, v = y
-
-        return [ v, -g - b*h ]
-
-    def free_fall_NoAir_time(self, **kwargs):
-        """
-        find the time for a body with given mass <m> to fall through height <h>
-        and on planet with gravitational acceleration <g> without considering
-        air resistance using galilee mechanics, the result as good as small
-        the stepsize <dt> is
-
-        Parameters
-        ----------
-        m: double
-            mass of the object
-
-        h: double
-            height to be fallen
-
-        dt: double
-            step size of the time interval
-
-        g: double
-            gravitational acceleration
-
-        v0: double
-            initial velocity, if positive value means the body is thrown up, if
-            negative it is thrown towards the earth surface
-
-        Returns
-        -------
-        :double
-            the time for which the body falls distance <h>
-        """
+    def time_it(self, **kwargs):
 
         self.change_params(**kwargs)
 
         from scipy.integrate import ode
 
-        r = ode(self._eq_free_fall_NoAir).set_integrator("dopri5")
+        r = ode(self._eq_motion).set_integrator("dopri5")
 
         r.set_f_params(self.g)
 
-        r.set_initial_value(y=[self.h, self.v0], t=0)
+        r.set_initial_value(
+            y=[ self.x0, self.y0, self.vx0, self.vy0 ],
+            t=self.t0
+        )
 
-        while r.integrate(r.t+self.dt)[0] >= 0:
+        while r.integrate(r.t+self.dt)[1] >= 0:
             continue
 
         return r.t - self.dt
 
-    def free_fall_NoAir_HvsT(self, **kwargs):
-        """
-        find the time for a body with given mass <m> to fall through height <h>
-        and on planet with gravitational acceleration <g> without considering
-        air resistance using galilee mechanics, the result as good as small
-        the stepsize <dt>, it will return list of position for given time to
-        plot the motion
-
-        Parameters
-        ----------
-        m: double
-            mass of the object
-
-        h: double
-            height to be fallen
-
-        dt: double
-            step size of the time interval
-
-        g: double
-            gravitational acceleration
-
-        v0: double
-            initial velocity, if positive value means the body is thrown up, if
-            negative it is thrown towards the earth surface
-
-        Returns
-        -------
-        : tuple
-            [0] is the time
-            [1]: nested list
-                [0]: list
-                    the height position for the corresponding time
-        """
+    def get_data(self, **kwargs):
 
         self.change_params(**kwargs)
 
         from scipy.integrate import ode
 
-        r = ode(self._eq_free_fall_NoAir).set_integrator("dopri5")
+        r = ode(self._eq_motion).set_integrator("dopri5")
 
         r.set_f_params(self.g)
 
-        r.set_initial_value(y=[self.h, self.v0], t=0)
+        r.set_initial_value(
+            y=[ self.x0, self.y0, self.vx0, self.vy0 ],
+            t=self.t0
+        )
 
-        t_list = [ 0 ]
-        y_nested_list = [ [ self.h ] ]
+        t = [ r.t ]
+        ode = [ [ _ ] for _ in r.y ]
 
-        while r.integrate(r.t+self.dt)[0] >= 0:
+        while r.integrate(r.t+self.dt)[1] >= 0:
 
-            t_list.append(r.t)
-            y_nested_list[0].append(r.y[0])
+            t.append(r.t)
 
-        return t_list, y_nested_list
+            for i,j in zip(ode, r.y):
+                i.append(j)
 
-    def free_fall_Air_time(self, **kwargs):
-        """
-        find the time for a body with given mass <m> to fall through height <h>
-        and on planet with gravitational acceleration <g> with considering
-        air resistance, characterized by parameter <b> using galilee mechanics,
-        the result as good as small the stepsize <dt> is
-
-        Parameters
-        ----------
-        m: double
-            mass of the object
-
-        h: double
-            height to be fallen
-
-        dt: double
-            step size of the time interval
-
-        g: double
-            gravitational acceleration
-
-        v0: double
-            initial velocity, if positive value means the body is thrown up, if
-            negative it is thrown towards the earth surface
-
-        b: double
-            air resistance parameter
-
-        Returns
-        -------
-        :double
-            the time for which the body falls distance <H>
-        """
-
-        self.change_params(**kwargs)
-
-        from scipy.integrate import ode
-
-        r = ode(self._eq_free_fall_Air).set_integrator("dopri5")
-
-        r.set_f_params(self.g, self.b)
-
-        r.set_initial_value(y=[self.h, self.v0], t=0)
-
-        while r.integrate(r.t+self.dt)[0] >= 0:
-            print(r.t, r.y[0], r.y[1])
-            continue
-
-        return r.t - self.dt
-
-    def free_fall_Air_HvsT(self, **kwargs):
-        """
-        find the time for a body with given mass <m> to fall through height <h>
-        and on planet with gravitational acceleration <g> with considering
-        air resistance, characterized by parameter <b> using galilee mechanics,
-        the result as good as small the stepsize <dt> is
-
-        Parameters
-        ----------
-        m: double
-            mass of the object
-
-        h: double
-            height to be fallen
-
-        dt: double
-            step size of the time interval
-
-        g: double
-            gravitational acceleration
-
-        v0: double
-            initial velocity, if positive value means the body is thrown up, if
-            negative it is thrown towards the earth surface
-
-        b: double
-            air resistance parameter
-
-        Returns
-        -------
-        : tuple
-            [0] is the time
-            [1]: nested list
-                [0]: list
-                    the height position for the corresponding time
-        """
-
-        self.change_params(**kwargs)
-
-        from scipy.integrate import ode
-
-        r = ode(self._eq_free_fall_Air).set_integrator("dopri5")
-
-        r.set_f_params(self.g, self.b)
-
-        r.set_initial_value(y=[self.h, self.v0], t=0)
-
-        t_list = [ 0 ]
-        y_nested_list = [ [ self.h ] ]
-
-        while r.integrate(r.t+self.dt)[0] >= 0:
-
-            t_list.append(r.t)
-            y_nested_list[0].append(r.y[0])
-
-        return t_list, y_nested_list
+        return [ t, ode ]
 
 if __name__ == "__main__":
 

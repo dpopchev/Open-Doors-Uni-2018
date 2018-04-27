@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import aristotel
+import galilee
 import imp
 import matplotlib.animation as animation
 
@@ -10,6 +11,7 @@ from matplotlib.gridspec import GridSpec
 from IPython import get_ipython
 
 imp.reload(aristotel)
+imp.reload(galilee)
 #~ get_ipython().run_line_magic("matplotlib", "qt5")
 
 class motion:
@@ -17,6 +19,7 @@ class motion:
     _parameters_default = {
         "m": [ 1, 5, 10 ],
         "b": 1,
+        "g": 9.81,
         "x0": 0,
         "y0": 10,
         "vx0": 0,
@@ -28,10 +31,11 @@ class motion:
     def __init__(self, **kwargs):
 
         self.A = aristotel.motion()
+        self.G = galilee.motion()
 
         self.m = []
-        self.m = None
         self.b = None
+        self.g = None
         self.x0 = None
         self.y0 = None
         self.vx0 = None
@@ -46,6 +50,7 @@ class motion:
         self.max_t = 0
 
         self.data_aristotel = {}
+        self.data_galilee = {}
 
         self.change_params(**kwargs)
 
@@ -70,10 +75,19 @@ class motion:
             self.ls_ms.append(ls_ms)
 
         self.max_x = 0
+        self.min_x = 0
+
         self.max_y = 0
+        self.min_y = 0
+
         self.max_vx = 0
+        self.min_vx = 0
+
         self.max_vy = 0
+        self.min_vy = 0
+
         self.max_t = 0
+        self.min_t = 0
 
         return
 
@@ -108,7 +122,7 @@ class motion:
         return iter(all_combinations)
 
     @staticmethod
-    def _reduce_points(data, N=10):
+    def _reduce_points(data, N=20):
 
         mevery = int(len(data)/(N-1))
         last = data[-1]
@@ -138,11 +152,25 @@ class motion:
 
         return
 
-    def _set_max_y_vy(self, data):
+    def _set_max_min_y_vy_t(self, data):
 
-        self.max_t = self.max_t if self.max_t >= max(data[0]) else max(data[0])
-        self.max_y = self.max_y if self.max_y >= max(data[1][1]) else max(data[1][1])
-        self.max_vy = self.max_vy if self.max_vy >= max(data[1][3]) else max(data[1][3])
+        self.max_t = \
+            self.max_t if abs(self.max_t) >= abs(max(data[0],key=abs)) else max(data[0],key=abs)
+
+        self.min_t = \
+            self.min_t if abs(self.min_t) >= abs(min(data[0],key=abs)) else min(data[0],key=abs)
+
+        self.max_y = \
+            self.max_y if abs(self.max_y) >= abs(max(data[1][1],key=abs)) else max(data[1][1],key=abs)
+
+        self.min_y = \
+            self.min_y if abs(self.min_y) >= abs(min(data[1][1],key=abs)) else min(data[1][1],key=abs)
+
+        self.max_vy = \
+            self.max_vy if abs(self.max_vy) >= abs(max(data[1][3],key=abs)) else max(data[1][3],key=abs)
+
+        self.min_vy = \
+            self.min_vy if abs(self.min_vy) >= abs(min(data[1][3],key=abs)) else min(data[1][3],key=abs)
 
         return
 
@@ -174,7 +202,7 @@ class motion:
 
         for _, ls_ms in zip(self.data_aristotel.keys() - "c", self.ls_ms):
 
-            self._set_max_y_vy(self.data_aristotel[_])
+            self._set_max_min_y_vy_t(self.data_aristotel[_])
 
             ax_y.plot(
                 self.data_aristotel[_][0],
@@ -234,7 +262,7 @@ class motion:
 
         for _, ls_ms in zip(frame, self.ls_ms):
 
-            self._set_max_y_vy(self.data_aristotel[_])
+            self._set_max_min_y_vy_t(self.data_aristotel[_])
 
             ax_y.plot(
                 frame[_][0],
@@ -282,6 +310,170 @@ class motion:
         )
 
         plt.show()
+
+    def _load_galilee_all(self):
+
+        self.data_galilee.clear()
+
+        for _ in self.m:
+
+            self.data_galilee["m={}".format(_)] = self.G.get_data(g=self.g)
+
+            self.data_galilee["m={}".format(_)][0] = \
+                self._reduce_points( self.data_galilee["m={}".format(_)][0] )
+
+            for ind, ydata in enumerate(self.data_galilee["m={}".format(_)][1]):
+                self.data_galilee["m={}".format(_)][1][ind] = self._reduce_points( ydata )
+
+
+        self.data_galilee["c"] = "r"
+
+    def plot_y_vy_all_galilee(self):
+
+        fig, ax_y, ax_vy = self._get_y_vy_plot()
+
+        self._load_galilee_all()
+
+        self._set_plot_parms(ax_y, "time", "height")
+        self._set_plot_parms(ax_vy, "time", "velocity")
+
+        for _, ls_ms in zip(self.data_galilee.keys() - "c", self.ls_ms):
+
+            self._set_max_min_y_vy_t(self.data_galilee[_])
+
+            ax_y.plot(
+                self.data_galilee[_][0],
+                self.data_galilee[_][1][1],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_galilee["c"],
+                label="{}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+            ax_vy.plot(
+                self.data_galilee[_][0],
+                self.data_galilee[_][1][3],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_galilee["c"],
+                label="{}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+        ax_y.set_xlim(
+            self.min_t - 0.05*self.min_t,
+            self.max_t + 0.05*self.max_t
+        )
+        ax_y.set_ylim(
+            self.min_y - 0.05*self.min_y,
+            self.max_y + 0.05*self.max_y
+        )
+        ax_y.legend(loc="best",fontsize=10)
+
+        ax_vy.set_xlim(
+            self.min_t - 0.05*self.min_t,
+            self.max_t + 0.05*self.max_t
+        )
+
+        ax_vy.set_ylim(
+            self.min_vy - 0.05*self.min_vy,
+            self.max_vy + 0.05*self.max_vy
+        )
+        ax_vy.legend(loc="best",fontsize=10)
+
+        plt.show()
+
+    def update_G_data(self):
+
+        lengths = []
+        for _ in self.data_galilee.keys() - "c":
+            lengths.append(len(self.data_galilee[_][0]) + 1)
+
+        i = 1
+        while i <= max(lengths):
+
+            yield {
+                mass: [
+                    self.data_galilee[mass][0][:i], [
+                        ypoints[:i] for ypoints in self.data_galilee[mass][1]
+                    ]
+                ] for mass in self.data_galilee.keys() - "c"
+            }
+
+            i += 1
+
+    def update_G_plot(self, frame, ax_y, ax_vy):
+
+        self._set_plot_parms(ax_y, "time", "height")
+        self._set_plot_parms(ax_vy, "time", "velocity")
+
+        for _, ls_ms in zip(frame, self.ls_ms):
+
+            self._set_max_min_y_vy_t(self.data_galilee[_])
+
+            ax_y.plot(
+                frame[_][0],
+                frame[_][1][1],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_galilee["c"],
+                label="{}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+            ax_vy.plot(
+                frame[_][0],
+                frame[_][1][3],
+                linestyle=ls_ms[0],
+                linewidth=1.2,
+                color=self.data_galilee["c"],
+                label="{}".format(_),
+                marker=ls_ms[1],
+                markersize=8
+            )
+
+        ax_y.set_xlim(
+            self.min_t - 0.05*self.min_t,
+            self.max_t + 0.05*self.max_t
+        )
+        ax_y.set_ylim(
+            self.min_y - 0.05*self.min_y,
+            self.max_y + 0.05*self.max_y
+        )
+        ax_y.legend(loc="best",fontsize=10)
+
+        ax_vy.set_xlim(
+            self.min_t - 0.05*self.min_t,
+            self.max_t + 0.05*self.max_t
+        )
+
+        ax_vy.set_ylim(
+            self.min_vy - 0.05*self.min_vy,
+            self.max_vy + 0.05*self.max_vy
+        )
+        ax_vy.legend(loc="best",fontsize=10)
+
+    def animate_all_galilee(self):
+
+        fig, ax_y, ax_vy = self._get_y_vy_plot()
+
+        self._load_galilee_all()
+
+        ani = animation.FuncAnimation(
+            fig=fig,
+            func=self.update_G_plot,
+            fargs=(ax_y, ax_vy),
+            frames=self.update_G_data,
+            interval=500,
+            repeat=False
+        )
+
+        plt.show()
+
 
     #@staticmethod
     #def _get_N_random_colors(N=4):
