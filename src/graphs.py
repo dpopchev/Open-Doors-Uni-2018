@@ -1093,5 +1093,44 @@ class orbit:
 
 if __name__ == "__main__":
 
+    a = motion()
+    b = orbit()
+
     print("\n Hello world \n")
 
+    input("\n Shall we start simulations? Press any key to continue... \n")
+
+    input(
+        "\n First plot simulation of free fall in Aristotelian mechanics"
+        " Press any key to continue... \n"
+    )
+
+    a.animate_all_aristotel()
+
+    input(
+        "\n Compare free fall in Aristotelian and Galilean mechanics "
+        "Press any key to continue... \n"
+    )
+
+    a.animate_all_galilee_vs_A()
+
+    input(
+        "\n Compare free fall in Aristotelian, Galilean and Newton mechanics "
+        "Press any key to continue... \n"
+    )
+
+    a.animate_all_newton_vs_G_A()
+
+    input(
+        "\n Observe orbit in Newtonian mechanics"
+        " Press any key to continue... \n"
+    )
+
+    b.animate_all_newton_orbit()
+
+    input(
+        "\n Compare Newtonian orbit and GR orbit "
+        "Press any key to continue... \n"
+    )
+
+    b.compare_first_gr_newton_orbit()
